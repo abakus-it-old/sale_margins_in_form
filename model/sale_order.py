@@ -17,7 +17,7 @@ class sale_order(models.Model):
         sale_order_lines = sale_order_line_obj.search(cr, uid, [('order_id', '=', self.id)])
         if sale_order_lines:
             for sale_order_line in sale_order_line_obj.browse(cr, uid,sale_order_lines):
-                margin += sale_order_line.margin
+                margin += sale_order_line.margin * sale_order_line.product_uom_qty
 
         self.total_margin = margin
 
