@@ -16,9 +16,6 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//tree[@string='Sales Order Lines']/field[@name='discount']" position="attributes">
-                    <attribute name='invisible'>1</attribute> 
-                </xpath>
                 <xpath expr="//field[@name='amount_total']" position="after">
                     <field name="total_margin"/>
                 </xpath>
