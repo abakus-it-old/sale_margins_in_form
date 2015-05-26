@@ -48,7 +48,10 @@ class sale_order_line(models.Model):
                         computed_cost_price = pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).price
                     else:
                         computed_cost_price = pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).price / pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).min_quantity
-                    self.margin = self.price_unit - computed_cost_price
+                    discount = 0
+                    if (self.discount)
+                        discount = self.discount
+                    self.margin = (self.price_unit * (1 - (discount / 100))) - computed_cost_price
                 else:
                     self.margin = -1 #error
             else:
