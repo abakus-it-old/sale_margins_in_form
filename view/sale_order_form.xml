@@ -5,6 +5,7 @@
             <field name="name">sale.order.line.margin</field>
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form_editable_list"/>
+            <field name="groups_id" eval="[(6,0,[ref('base.group_sale_salesman')])]"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='order_line']/tree" position="attributes">
                     <attribute name="editable">bottom</attribute>
@@ -15,6 +16,7 @@
             <field name="name">sale.order.margin</field>
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="groups_id" eval="[(6,0,[ref('base.group_sale_salesman')])]"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='amount_total']" position="after">
                     <field name="total_margin"/>
