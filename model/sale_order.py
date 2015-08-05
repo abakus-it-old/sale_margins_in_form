@@ -1,32 +1,12 @@
 from openerp import models, fields, api
 
-class sale_order(models.Model):
-    _inherit = ['sale.order']
-
-    total_margin = fields.Float(compute='_compute_margin', string="Total margin")
-
-    @api.one
-    @api.onchange('order_line')
-    def _compute_margin(self):
-        cr = self.env.cr
-        uid = self.env.user.id
-
-        margin = 0
-
-        sale_order_line_obj = self.pool.get('sale.order.line')
-        sale_order_lines = sale_order_line_obj.search(cr, uid, [('order_id', '=', self.id)])
-        if sale_order_lines:
-            for sale_order_line in sale_order_line_obj.browse(cr, uid,sale_order_lines):
-                margin += sale_order_line.margin * sale_order_line.product_uom_qty
-
-        self.total_margin = margin
-
 class sale_order_line(models.Model):
     _inherit = ['sale.order.line']
 
-    margin = fields.Float(compute='_compute_margin_for_line', string="Margin")
-
+    margin = fields.Float(compute='_compute_margin_for_line', string="Margin", store=False)
+    
     @api.one
+    @api.depends('product_id', 'discount')
     def _compute_margin_for_line(self):
         cr = self.env.cr
         uid = self.env.user.id
@@ -58,3 +38,23 @@ class sale_order_line(models.Model):
                 self.margin = -2 #error
         else:
             self.margin = self.price_unit - self.product_id.standard_price
+
+class sale_order(models.Model):
+    _inherit = ['sale.order']
+
+    total_margin = fields.Float(compute='_compute_margins', string="Total margin", store=True)
+
+    @api.one
+    @api.onchange('order_line','order_line.product_uom_qty','order_line.product_id')
+    @api.depends('order_line')
+    def _compute_margins(self):
+        cr = self.env.cr
+        uid = self.env.user.id
+
+        margin = 0
+
+        if self.order_line:
+            for sale_order_line in self.order_line:
+                margin += sale_order_line.margin * sale_order_line.product_uom_qty
+
+        self.total_margin = margin
