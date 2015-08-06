@@ -37,7 +37,10 @@ class sale_order_line(models.Model):
             else:
                 self.margin = -2 #error
         else:
-            self.margin = self.price_unit - self.product_id.standard_price
+            discount = 0
+            if (self.discount):
+                discount = self.discount
+            self.margin = (self.price_unit * (1 - (discount / 100))) - self.product_id.standard_price
 
 class sale_order(models.Model):
     _inherit = ['sale.order']
