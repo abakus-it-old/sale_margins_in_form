@@ -3,9 +3,10 @@ from openerp import models, fields, api
 class sale_order_line(models.Model):
     _inherit = ['sale.order.line']
 
-    margin = fields.Float(compute='_compute_margin_for_line', string="Margin", store=False)
+    margin = fields.Float(compute='_compute_margin_for_line', string="Margin", store=True)
     
     @api.one
+    @api.onchange('product_uom_qty','product_id','discount')
     @api.depends('product_id', 'discount')
     def _compute_margin_for_line(self):
         cr = self.env.cr
@@ -48,7 +49,7 @@ class sale_order(models.Model):
     total_margin = fields.Float(compute='_compute_margins', string="Total margin", store=True)
 
     @api.one
-    @api.onchange('order_line','order_line.product_uom_qty','order_line.product_id')
+    @api.onchange('order_line','order_line.product_uom_qty','order_line.product_id','order_line.discount')
     @api.depends('order_line')
     def _compute_margins(self):
         cr = self.env.cr
