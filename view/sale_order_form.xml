@@ -21,7 +21,7 @@
                 <xpath expr="//field[@name='amount_total']" position="after">
                     <field name="total_margin"/>
                 </xpath>
-                <xpath expr="//tree[@string='Sales Order Lines']/field[@name='price_unit']" position="after">
+                <xpath expr="//field[@name='order_line']//tree//field[@name='price_unit']" position="after">
                     <field name="margin"/>
                 </xpath>
             </field>
