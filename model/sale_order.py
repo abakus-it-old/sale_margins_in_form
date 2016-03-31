@@ -1,47 +1,38 @@
 from openerp import models, fields, api
+import logging
+_logger = logging.getLogger(__name__)
 
 class sale_order_line(models.Model):
-    _inherit = ['sale.order.line']
+	_inherit = ['sale.order.line']
 
-    margin = fields.Float(compute='_compute_margin_for_line', string="Margin", store=True)
+	margin = fields.Float(compute='_compute_margin_for_line', string="Margin", store=True)
     
-    @api.one
-    @api.onchange('product_uom_qty','product_id','discount')
-    @api.depends('product_id', 'discount')
-    def _compute_margin_for_line(self):
-        cr = self.env.cr
-        uid = self.env.user.id
+	@api.one
+	@api.onchange('product_uom_qty','product_id','discount','price_unit')
+	@api.depends('product_id', 'discount')
+	def _compute_margin_for_line(self):
+		cr = self.env.cr
+		uid = self.env.user.id
 
-        if self.product_id.seller_id.id: # Product as sellers
-            # get supplier info
-            obj = self.pool.get('product.supplierinfo')
-            supplier_info = obj.search(cr, uid, [('product_tmpl_id', '=', self.product_id.product_tmpl_id.id)])
-            if supplier_info and supplier_info[0]:
-                right_supplier = obj.browse(cr, uid, supplier_info[0])
-                for val in obj.browse(cr, uid, supplier_info):
-                    if val.sequence < right_supplier.sequence:
-                        right_supplier = val
-                pricelist_partnerinfo_obj = self.pool.get('pricelist.partnerinfo')
-                pricelist_partnerinfos = pricelist_partnerinfo_obj.search(cr, uid, [('suppinfo_id', '=', right_supplier.id)])
-                if pricelist_partnerinfos:
-                    computed_cost_price = 0
-                    if pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).min_quantity == 0:
-                        computed_cost_price = pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).price
-                    else:
-                        computed_cost_price = pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).price / pricelist_partnerinfo_obj.browse(cr, uid, pricelist_partnerinfos[0]).min_quantity
-                    discount = 0
-                    if (self.discount):
-                        discount = self.discount
-                    self.margin = (self.price_unit * (1 - (discount / 100))) - computed_cost_price
-                else:
-                    self.margin = -1 #error
-            else:
-                self.margin = -2 #error
-        else:
-            discount = 0
-            if (self.discount):
-                discount = self.discount
-            self.margin = (self.price_unit * (1 - (discount / 100))) - self.product_id.standard_price
+		# Product as sellers
+		if len(self.product_id.seller_ids) > 0:
+			# get supplier info
+			obj = self.pool.get('product.supplierinfo')
+			supplier_info_ids = obj.search(cr, uid, [('product_tmpl_id', '=', self.product_id.product_tmpl_id.id)], order='sequence ASC')
+			if len(supplier_info_ids) > 0:
+				right_supplier = obj.browse(cr, uid, supplier_info_ids[0])
+
+				computed_cost_price = right_supplier.price
+				_logger.debug("Cost price: %s", computed_cost_price)
+				self.margin = (self.price_unit * (1 - (self.discount / 100))) - computed_cost_price
+				_logger.debug("MARGIN: %s", self.margin)
+			else:
+				 #error
+				self.margin = -1
+		else:
+			discount = 0
+			if (self.discount):
+				self.margin = (self.price_unit * (1 - (self.discount / 100))) - self.product_id.standard_price
 
 class sale_order(models.Model):
     _inherit = ['sale.order']
@@ -49,7 +40,7 @@ class sale_order(models.Model):
     total_margin = fields.Float(compute='_compute_margins', string="Total margin", store=True)
 
     @api.one
-    @api.onchange('order_line','order_line.product_uom_qty','order_line.product_id','order_line.discount')
+    @api.onchange('order_line')#,'order_line.product_uom_qty','order_line.product_id','order_line.discount')
     @api.depends('order_line')
     def _compute_margins(self):
         cr = self.env.cr
@@ -59,6 +50,7 @@ class sale_order(models.Model):
 
         if self.order_line:
             for sale_order_line in self.order_line:
+            	_logger.debug("Margin total: %s", margin)
                 margin += sale_order_line.margin * sale_order_line.product_uom_qty
 
         self.total_margin = margin
