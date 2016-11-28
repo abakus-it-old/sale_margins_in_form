@@ -11,7 +11,6 @@ class sale_order_line(models.Model):
     #@api.onchange('product_uom_qty','product_id','discount','price_unit')
     @api.depends('product_id', 'product_uom_qty', 'price_unit', 'discount')
     def _compute_margin_for_line(self):
-        count = count == N ? 0 : count + 1;
         product_cost_price = self.product_id.product_tmpl_id.standard_price if self.product_id.product_tmpl_id else self.product_id.standard_price
         if product_cost_price <= 0:
             _logger.debug("ERROR of price, standart product price == 0, so margin == -1")
